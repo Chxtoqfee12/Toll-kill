@@ -1,13 +1,11 @@
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Debris = game:GetService("Debris")
 local LocalPlayer = Players.LocalPlayer
 
 -- Settings
 local radius = 15
 local attackDelay = 0.3
-local knockbackPower = 60
 local aoeEnabled = false
 local lastAttack = 0
 local aoeConnection
@@ -26,7 +24,8 @@ Frame.Draggable = true
 
 local Title = Instance.new("TextLabel", Frame)
 Title.Size = UDim2.new(1,0,0,30)
-Title.Text = "AOE Slap"
+Title.Position = UDim2.new(0,0,0,0)
+Title.Text = "AURA CHX"
 Title.BackgroundTransparency = 1
 Title.TextColor3 = Color3.fromRGB(255,255,255)
 Title.Font = Enum.Font.SourceSansBold
@@ -43,7 +42,7 @@ ToggleButton.Font = Enum.Font.SourceSansBold
 ToggleButton.TextSize = 16
 
 -- Input function
-local function createInput(name, yPos, default, min, max, step, callback)
+local function createInput(name,yPos,default,min,max,step,callback)
     local label = Instance.new("TextLabel", Frame)
     label.Size = UDim2.new(0.5,-5,0,25)
     label.Position = UDim2.new(0.05,0,yPos,0)
@@ -66,7 +65,7 @@ local function createInput(name, yPos, default, min, max, step, callback)
         local val = tonumber(box.Text)
         if val then
             val = math.clamp(val,min,max)
-            val = math.floor(val/step + 0.5)*step
+            val = math.floor(val/step + 0.5) * step
             box.Text = tostring(val)
             callback(val)
         else
@@ -76,7 +75,7 @@ local function createInput(name, yPos, default, min, max, step, callback)
 end
 
 -- Inputs
-createInput("Radius",0.6,radius,1,100,1,function(val) radius=val end)
+createInput("Radius",0.6,radius,1,5000,1,function(val) radius=val end)
 createInput("Delay",0.75,attackDelay,0.05,5,0.01,function(val) attackDelay=val end)
 
 -- ฟังก์ชัน AOE Slap
@@ -93,22 +92,10 @@ local function FireAOE()
             local targetHRP = plr.Character.HumanoidRootPart
             local dist = (targetHRP.Position - center).Magnitude
 
-            if dist <= radius then
-                -- กระเด็นผู้เล่นคนอื่น
-                if targetHRP.Anchored then targetHRP.Anchored=false end
-                local direction = (targetHRP.Position - center).Unit
-                local bv = Instance.new("BodyVelocity")
-                bv.Velocity = direction * knockbackPower + Vector3.new(0,knockbackPower*0.3,0)
-                bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-                bv.P = 1250
-                bv.Parent = targetHRP
-                Debris:AddItem(bv,0.3)
-
-                -- Damage เฉพาะถือ Slap
-                if slapEvent then
-                    local args = {"slash",plr.Character,targetHRP.Position}
-                    slapEvent:FireServer(unpack(args))
-                end
+            if dist <= radius and slapEvent then
+                -- Damage เกิดเฉพาะถือ Slap
+                local args = {"slash",plr.Character,targetHRP.Position}
+                slapEvent:FireServer(unpack(args))
             end
         end
     end
@@ -124,7 +111,7 @@ ToggleButton.MouseButton1Click:Connect(function()
         aoeConnection = RunService.Heartbeat:Connect(function()
             if tick()-lastAttack >= attackDelay then
                 FireAOE()
-                lastAttack = tick()
+                lastAttack=tick()
             end
         end)
     else
